@@ -194,6 +194,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
     <div id="more">
       <div class="glass" id="pics" hidden></div>
       <button class="glass" id="moreBtn">Weiteres Bild<small id="moreCost"></small></button>
+      <button class="glass" id="skipBtn" style="padding:10px 16px;font-weight:700;min-height:56px">👎 Bild passt nicht</button>
     </div>
   </div>
 
@@ -317,6 +318,8 @@ function markSeen(id){ try{ let s=seen(); s.push(id); if(s.length>=ROUNDS.length
 function bad(){ try{ return JSON.parse(localStorage.getItem("ww2_bad")||"[]"); }catch(e){ return []; } }
 function updBad(){ const b=bad(), el=$("badCopy"); el.hidden=!b.length; el.textContent=b.length+" schlechte Fotos gemeldet – Liste kopieren"; }
 $("badBtn").onclick=()=>{ try{ const b=bad(); if(!b.includes(G.cur.id)) b.push(G.cur.id); localStorage.setItem("ww2_bad",JSON.stringify(b)); }catch(e){} $("badBtn").textContent="Gemerkt. Kommt nicht mehr."; $("badBtn").disabled=true; };
+$("skipBtn").onclick=()=>{ if(!G.cur) return; try{ const b=bad(); if(!b.includes(G.cur.id)) b.push(G.cur.id); localStorage.setItem("ww2_bad",JSON.stringify(b)); }catch(e){}
+  if(G.pool.length){ G.queue[G.i]=G.pool.shift(); startRound(); } else { G.i++; if(G.i<G.n) startRound(); else endGame(); } };
 $("badCopy").onclick=()=>{ const t="Schlechte Fotos: "+bad().join(" "); (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{ $("badCopy").textContent="Kopiert. Schick die Liste an Claude."; }).catch(()=>{ window.prompt("Kopiere diese Liste:",t); }); };
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function setRounds(n){ G.n=Math.max(1,Math.min(Math.min(30,ROUNDS.length),n)); $("rVal").textContent=G.n; }
