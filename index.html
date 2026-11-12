@@ -128,6 +128,28 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 #credits a{color:inherit}
 #nextBtn{flex:1}
 
+/* Zeit + Mehrspieler */
+.pick small{color:var(--dim);font-size:1rem;display:block}
+.pick .tv,#msVal{font-size:2.2rem;min-width:4.2ch;display:inline-block;text-transform:none}
+.mpset #msVal{font-size:1.6rem;min-width:0}
+.field{font:inherit;font-weight:700;color:#fff;background:rgba(255,255,255,.1);border:2px solid var(--line);border-radius:14px;min-height:60px;padding:0 16px;width:100%;text-align:center;-webkit-user-select:text;user-select:text}
+.field::placeholder{color:#8f92ab;font-weight:500}
+.field:focus{outline:3px solid var(--gold)}
+.mpbox{width:min(520px,100%);padding:20px;display:flex;flex-direction:column;gap:14px}
+.mpbox .go,.mpbox .ghost{width:100%}
+.code{font-size:clamp(3rem,13vw,5.2rem);line-height:1;letter-spacing:.08em;color:var(--gold);-webkit-user-select:text;user-select:text}
+.plist{display:flex;flex-direction:column;gap:6px;text-align:left;max-height:30dvh;overflow-y:auto}
+.plist div{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.07);font-weight:700}
+.plist div.me{background:rgba(255,209,102,.2)}
+.plist div.off{opacity:.45}
+.mpset{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mpset .pick{padding:10px;gap:8px;justify-content:space-between}
+.mpset .round{width:48px;height:48px;font-size:1.6rem;flex:none}
+.mpset b{font-size:1.6rem}
+#mpWait{margin:0;color:var(--gold);font-weight:700}
+#mp .err{color:var(--red);font-weight:700;margin:0}
+.or{color:var(--dim);font-size:1rem}
+
 /* schmal: Handy hochkant */
 @media (max-width:760px){
   html,body{font-size:18px}
@@ -139,6 +161,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
   .w-d{width:64px}.w-m{width:128px}.w-y{width:96px}
   .stats div{padding:6px 12px}.stats b{font-size:1.35rem}
   #pics button{width:42px;height:42px}
+  #game.mapbig #more{display:none}
   #card{left:0;right:0;bottom:0;width:100%;border-radius:18px 18px 0 0;max-height:58dvh;padding-bottom:var(--padb)}
 }
 @media (max-height:520px){ .wheel button{height:32px} #mapWrap.big{height:calc(100dvh - 110px)} }
@@ -155,7 +178,13 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
     <div><b class="head num" id="rVal">5</b><div style="color:var(--dim);font-size:1rem">Runden</div></div>
     <button class="round" id="rPlus" aria-label="Eine Runde mehr">+</button>
   </div>
+  <div class="glass pick" id="tpick" hidden>
+    <button class="round" id="tMinus" aria-label="Eine Sekunde weniger">−</button>
+    <button id="tTap" aria-label="Sekunden eintippen"><b class="head num tv" id="tSet">Aus</b><small>Zeit pro Bild</small></button>
+    <button class="round" id="tPlus" aria-label="Eine Sekunde mehr">+</button>
+  </div>
   <button class="go" id="startBtn" hidden>Spielen</button>
+  <button class="ghost" id="mpBtn" hidden style="padding:0 26px">👥 Mit Freunden spielen</button>
   <button class="link" id="rulesBtn">Regeln ansehen</button>
   <button class="link" id="badCopy" hidden></button>
 </div>
@@ -190,6 +219,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
     <div class="glass stats">
       <div><small>Runde</small><b class="head num"><span id="roundNo">1</span>/<span id="roundMax">5</span></b></div>
       <div><small>Konto</small><b class="head num" id="account">0</b></div>
+      <div id="tCell" hidden><small>Zeit</small><b class="head num" id="tVal">0</b></div>
     </div>
     <div id="more">
       <div class="glass" id="pics" hidden></div>
@@ -226,6 +256,8 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
     <div class="bar"><span id="cLoc"></span><b class="num" id="cLocP"></b><i><u id="cLocB" style="width:0"></u></i></div>
     <div class="bar t"><span id="cTime"></span><b class="num" id="cTimeP"></b><i><u id="cTimeB" style="width:0"></u></i></div>
     <div class="calc num" id="cCalc"></div>
+    <div class="plist num" id="mpBoard" hidden></div>
+    <p id="mpWait" hidden></p>
     <div class="row">
       <button class="ghost" id="peekBtn">Foto zeigen</button>
       <button class="go" id="nextBtn">Weiter</button>
@@ -237,11 +269,38 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 
 <div class="screen" id="end" hidden>
   <div><div style="color:var(--dim);text-transform:uppercase;letter-spacing:.1em;font-weight:700">Endstand</div><div class="total head num" id="endScore"></div></div>
+  <div class="glass mpbox" id="endRankBox" hidden><div class="plist num" id="endRank"></div></div>
   <div class="glass endlist num" id="endList"></div>
   <button class="go" id="againBtn">Nochmal spielen</button>
 </div>
 
+<div class="screen" id="mp" hidden>
+  <h1 class="logo head" style="font-size:clamp(2.4rem,9vw,4.5rem)">Mit <span>Freunden</span></h1>
+  <div class="glass mpbox" id="mpMenu">
+    <input class="field" id="mpName" maxlength="16" placeholder="Dein Name" autocomplete="off">
+    <button class="go" id="mpCreate">Gruppe erstellen</button>
+    <div class="or">oder Code eingeben</div>
+    <input class="field" id="mpCode" inputmode="numeric" maxlength="6" placeholder="6-stelliger Code" autocomplete="off">
+    <button class="go" id="mpJoin">Beitreten</button>
+    <p class="err" id="mpErr" hidden></p>
+    <button class="link" id="mpBack">Zurück</button>
+  </div>
+  <div class="glass mpbox" id="mpLobby" hidden>
+    <div><div class="or">Code der Gruppe</div><div class="code head num" id="mpCodeBig"></div></div>
+    <div class="mpset"><button class="ghost" id="mpShare">Link teilen</button><button class="ghost" id="mpCopy">Link kopieren</button></div>
+    <div class="plist" id="mpList"></div>
+    <div class="mpset" id="mpHostSet">
+      <div class="glass pick"><button class="round" id="mrMinus" aria-label="Eine Runde weniger">−</button><div><b class="head num" id="mrVal">5</b><small>Runden</small></div><button class="round" id="mrPlus" aria-label="Eine Runde mehr">+</button></div>
+      <div class="glass pick"><button class="round" id="msMinus" aria-label="Eine Sekunde weniger">−</button><button id="msTap" aria-label="Sekunden eintippen"><b class="head num" id="msVal">Aus</b><small>Zeit pro Bild</small></button><button class="round" id="msPlus" aria-label="Eine Sekunde mehr">+</button></div>
+    </div>
+    <p id="mpInfo" style="margin:0;color:var(--dim)"></p>
+    <button class="go" id="mpStart">Start für alle</button>
+    <button class="link" id="mpLeave">Gruppe verlassen</button>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js" async></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
@@ -275,7 +334,7 @@ function initMap(){
     $("guessBtn").disabled=false; $("guessBtn").textContent="Raten"; });
 }
 $("layerBtn").onclick=()=>{ isSat=!isSat; if(isSat){ map.removeLayer(streets); sat.addTo(map); satLabels.addTo(map); } else { map.removeLayer(sat); map.removeLayer(satLabels); streets.addTo(map); } $("layerBtn").textContent=isSat?"Karte":"Satellit"; };
-function mapSize(cls){ const w=$("mapWrap"); const c=map.getCenter(); w.classList.remove("big","full"); if(cls) w.classList.add(cls);
+function mapSize(cls){ const w=$("mapWrap"); const c=map.getCenter(); w.classList.remove("big","full"); if(cls) w.classList.add(cls); $("game").classList.toggle("mapbig",cls==="big");
   let t=0; const tick=()=>{ map.invalidateSize({pan:false}); if(cls!=="full") map.setView(c,map.getZoom(),{animate:false}); if(++t<16) requestAnimationFrame(tick); }; tick(); }
 $("mapOpen").onclick=()=>mapSize("big");
 $("mapClose").onclick=()=>mapSize("");
@@ -311,26 +370,27 @@ document.querySelectorAll(".wheel button").forEach(b=>{ let t=0,iv=0; const stop
 $("yRange").oninput=e=>setDate(+e.target.value,D.m,D.d);
 
 /* ---------- Ablauf ---------- */
-const G={n:5,i:0,account:0,queue:[],cur:null,shown:1,view:0,log:[]};
-function show(id){ for(const s of ["start","game","end"]) $(s).hidden=s!==id; }
+const G={n:5,i:0,account:0,queue:[],cur:null,shown:1,view:0,log:[],tok:0,pool:[]};
+function show(id){ for(const s of ["start","game","end","mp"]) $(s).hidden=s!==id; }
 function seen(){ try{ return JSON.parse(localStorage.getItem("ww2_seen")||"[]"); }catch(e){ return []; } }
 function markSeen(id){ try{ let s=seen(); s.push(id); if(s.length>=ROUNDS.length) s=[id]; localStorage.setItem("ww2_seen",JSON.stringify(s)); }catch(e){} }
 function bad(){ try{ return JSON.parse(localStorage.getItem("ww2_bad")||"[]"); }catch(e){ return []; } }
 function updBad(){ const b=bad(), el=$("badCopy"); el.hidden=!b.length; el.textContent=b.length+" schlechte Fotos gemeldet – Liste kopieren"; }
 $("badBtn").onclick=()=>{ try{ const b=bad(); if(!b.includes(G.cur.id)) b.push(G.cur.id); localStorage.setItem("ww2_bad",JSON.stringify(b)); }catch(e){} $("badBtn").textContent="Gemerkt. Kommt nicht mehr."; $("badBtn").disabled=true; };
 $("skipBtn").onclick=()=>{ if(!G.cur) return; try{ const b=bad(); if(!b.includes(G.cur.id)) b.push(G.cur.id); localStorage.setItem("ww2_bad",JSON.stringify(b)); }catch(e){}
-  if(G.pool.length){ G.queue[G.i]=G.pool.shift(); startRound(); } else { G.i++; if(G.i<G.n) startRound(); else endGame(); } };
+  if(G.pool.length){ G.queue[G.i]=G.pool.shift(); startRound(); } else if(!MP.playing){ G.i++; if(G.i<G.n) startRound(); else endGame(); } };
 $("badCopy").onclick=()=>{ const t="Schlechte Fotos: "+bad().join(" "); (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{ $("badCopy").textContent="Kopiert. Schick die Liste an Claude."; }).catch(()=>{ window.prompt("Kopiere diese Liste:",t); }); };
 function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function setRounds(n){ G.n=Math.max(1,Math.min(Math.min(30,ROUNDS.length),n)); $("rVal").textContent=G.n; }
 $("rMinus").onclick=()=>setRounds(G.n-1); $("rPlus").onclick=()=>setRounds(G.n+1);
 $("rulesBtn").onclick=()=>{ $("rules").hidden=false; }; $("rulesClose").onclick=()=>{ $("rules").hidden=true; };
-$("startBtn").onclick=startGame; $("againBtn").onclick=()=>{ updBad(); show("start"); };
-function startGame(){ const s=new Set(seen()), bd=new Set(bad()), ok=ROUNDS.filter(r=>!bd.has(r.id)); const fresh=shuffle(ok.filter(r=>!s.has(r.id))), old=shuffle(ok.filter(r=>s.has(r.id)));
+$("startBtn").onclick=()=>{ MP.playing=false; startGame(); }; $("againBtn").onclick=()=>{ if(MP.on){ mpShowLobby(); return; } updBad(); show("start"); };
+function startGame(){ $("mpBoard").hidden=true; $("mpWait").hidden=true; const s=new Set(seen()), bd=new Set(bad()), ok=ROUNDS.filter(r=>!bd.has(r.id)); const fresh=shuffle(ok.filter(r=>!s.has(r.id))), old=shuffle(ok.filter(r=>s.has(r.id)));
   G.pool=fresh.concat(old); G.queue=G.pool.splice(0,G.n); G.i=0; G.account=0; G.log=[]; show("game"); if(!map) initMap(); startRound(); }
 function updAccount(){ const a=$("account"); a.textContent=fmt(G.account); a.classList.toggle("neg",G.account<0); }
 function loadPhoto(url){ return new Promise((ok,bad)=>{ const t=new Image(); t.onload=()=>ok(url); t.onerror=bad; t.src=url; }); }
 async function startRound(){
+  const tok=++G.tok; stopTimer(); $("tCell").hidden=!curSecs(); $("tVal").textContent=curSecs()||""; $("tVal").classList.remove("neg");
   const g=$("game"); g.classList.remove("res","peek"); $("card").hidden=true; $("spin").hidden=false; img.style.visibility="hidden";
   G.shown=1; G.view=0; guess=null; canGuess=false; if(guessM){ map.removeLayer(guessM); guessM=null; } if(resLayer){ map.removeLayer(resLayer); resLayer=null; }
   $("roundNo").textContent=G.i+1; $("roundMax").textContent=G.n; updAccount();
@@ -338,7 +398,8 @@ async function startRound(){
   mapSize(""); map.setView([25,10],2,{animate:false}); setDate(Math.round((YMIN+YMAX)/2),6,15);
   let r=G.queue[G.i];
   for(let tries=0;tries<6;tries++){ try{ await loadPhoto(r.im[0].s); break; }catch(e){ if(!G.pool.length) break; r=G.queue[G.i]=G.pool.shift(); } }
-  G.cur=r; markSeen(r.id); canGuess=true; renderPhoto();
+  if(tok!==G.tok) return;
+  G.cur=r; markSeen(r.id); canGuess=true; renderPhoto(); startTimer();
   const nx=G.queue[G.i+1]; if(nx) loadPhoto(nx.im[0].s).catch(()=>{});
 }
 function renderPhoto(){
@@ -352,21 +413,24 @@ function renderPhoto(){
 $("moreBtn").onclick=()=>{ if(canGuess&&G.shown<G.cur.im.length){ G.view=G.shown; G.shown++; renderPhoto(); } };
 $("peekBtn").onclick=()=>{ const p=$("game").classList.toggle("peek"); $("peekBtn").textContent=p?"Karte zeigen":"Foto zeigen"; };
 
-$("guessBtn").onclick=()=>{
-  if(!guess||!canGuess) return; canGuess=false; const r=G.cur;
-  const km=haversine(guess.lat,guess.lon,r.la,r.lo), [ty,tm,td]=r.d.split("-").map(Number), days=Math.abs(dayNum(D.y,D.m,D.d)-dayNum(ty,tm,td));
-  const lp=locPoints(km), tp=timePoints(days), raw=lp+tp, n=G.shown-1, neg=G.account<0, c=costs(n,neg), div=Math.round(raw/c.div), res=div-c.fix;
+$("guessBtn").onclick=()=>evaluate(false);
+function evaluate(force){
+  if(!canGuess||(!guess&&!force)) return; canGuess=false; stopTimer(); const r=G.cur;
+  const km=guess?haversine(guess.lat,guess.lon,r.la,r.lo):null, [ty,tm,td]=r.d.split("-").map(Number), days=Math.abs(dayNum(D.y,D.m,D.d)-dayNum(ty,tm,td));
+  const lp=guess?locPoints(km):0, tp=timePoints(days), raw=lp+tp, n=G.shown-1, neg=G.account<0, c=costs(n,neg), div=Math.round(raw/c.div), res=div-c.fix;
   G.account+=res; G.log.push({lp,tp,n,res,date:dstr(ty,tm,td)}); updAccount();
   $("cDate").textContent=dstr(ty,tm,td); $("cWhere").textContent=r.p||""; $("cWhere").hidden=!r.p; $("cCap").textContent=r.t||""; $("cCap").hidden=!r.t;
-  $("cLoc").textContent="Ort: "+kmTxt(km)+" daneben"; $("cLocP").textContent=fmt(lp);
+  $("cLoc").textContent=guess?"Ort: "+kmTxt(km)+" daneben":"Ort: kein Tipp gesetzt"; $("cLocP").textContent=fmt(lp);
   $("cTime").textContent="Zeit: "+daysTxt(days)+" (du: "+dstr(D.y,D.m,D.d)+")"; $("cTimeP").textContent=fmt(tp);
   $("cLocB").style.width="0"; $("cTimeB").style.width="0"; setTimeout(()=>{ $("cLocB").style.width=lp/50+"%"; $("cTimeB").style.width=tp/50+"%"; },60);
   let h="<span>Zusammen</span><b>"+fmt(raw)+"</b>";
   if(n>0){ h+="<span>"+n+(n===1?" weiteres Bild":" weitere Bilder")+": ÷ "+c.div+(neg?" (halbiert)":"")+"</span><b>"+fmt(div)+"</b>"; if(c.fix) h+="<span>Fixkosten"+(neg?" (halbiert)":"")+"</span><b>−"+fmt(c.fix)+"</b>"; }
   h+="<span class='head sum'>Diese Runde</span><b class='head sum "+(res<0?"neg":"pos")+"'>"+(res>0?"+":res<0?"−":"")+fmt(Math.abs(res))+"</b>"; $("cCalc").innerHTML=h;
   const cr=$("credits"); cr.innerHTML=""; r.im.forEach((m,i)=>{ const s=document.createElement("span"), a=document.createElement("a"); a.href=m.u; a.target="_blank"; a.rel="noopener"; a.textContent="Bild "+(i+1); s.append(a,": "+m.a+" · "+m.c+" · Wikimedia Commons"); cr.appendChild(s); });
-  $("nextBtn").textContent=G.i+1<G.n?"Weiter":"Endstand";
-  $("game").classList.add("res"); $("card").hidden=false; renderPhoto();
+  $("nextBtn").textContent=G.i+1<G.n?"Weiter":"Endstand"; $("nextBtn").hidden=false;
+  $("game").classList.add("res"); $("card").hidden=false; renderPhoto(); mpAfterRound();
+  if(!guess){ const truth=L.latLng(r.la,r.lo); resLayer=L.layerGroup([L.marker(truth,{icon:pinIcon("#2fbf71"),interactive:false}).bindTooltip("Richtig",{permanent:true,direction:"top",offset:[0,-46],className:"tag"})]).addTo(map);
+    $("mapWrap").classList.remove("big"); $("mapWrap").classList.add("full"); map.invalidateSize({pan:false}); map.setView(truth,5,{animate:false}); return; }
   /* Karte groß mit beiden Punkten */
   const gl=guessM.getLatLng(); let tl=r.lo; while(tl-gl.lng>180) tl-=360; while(gl.lng-tl>180) tl+=360; const truth=L.latLng(r.la,tl);
   resLayer=L.layerGroup([L.polyline([gl,truth],{color:"#111",weight:4,dashArray:"8 10"}),L.marker(truth,{icon:pinIcon("#2fbf71"),interactive:false}).bindTooltip("Richtig",{permanent:true,direction:"top",offset:[0,-46],className:"tag"})]).addTo(map);
@@ -375,15 +439,115 @@ $("guessBtn").onclick=()=>{
   const narrow=innerWidth<=760, ch=$("card").offsetHeight;
   map.fitBounds(L.latLngBounds([gl,truth]),{paddingTopLeft:narrow?[40,110]:[520,110],paddingBottomRight:narrow?[40,ch+30]:[60,60],maxZoom:15,animate:false});
 };
-$("nextBtn").onclick=()=>{ G.i++; if(G.i<G.n) startRound(); else endGame(); };
-function endGame(){ $("endScore").textContent=fmt(G.account); $("endScore").classList.toggle("neg",G.account<0);
+$("nextBtn").onclick=()=>{ if(MP.playing){ mpHostNext(); return; } G.i++; if(G.i<G.n) startRound(); else endGame(); };
+function endGame(){ stopTimer(); $("endRankBox").hidden=!MP.on; $("againBtn").textContent=MP.on?"Zurück zur Gruppe":"Nochmal spielen"; mpRender(); $("endScore").textContent=fmt(G.account); $("endScore").classList.toggle("neg",G.account<0);
   $("endList").innerHTML=G.log.map((l,i)=>"<div><span>"+(i+1)+".</span><span>"+l.date+"<br><small style='color:var(--dim)'>Ort "+fmt(l.lp)+" · Zeit "+fmt(l.tp)+" · "+(l.n+1)+(l.n?" Bilder":" Bild")+"</small></span><b class='"+(l.res<0?"neg":"")+"'>"+(l.res<0?"−":"")+fmt(Math.abs(l.res))+"</b></div>").join("");
   show("end"); }
+
+/* ---------- Zeitbegrenzung ---------- */
+let TIME=0, tEnd=0, tIv=0;
+try{ TIME=+localStorage.getItem("ww2_time")||0; }catch(e){}
+const secTxt=s=>s?s+" s":"Aus";
+function secStep(cur,dir){ if(!cur) return dir>0?60:0; const v=cur+dir; return v<5?0:Math.min(900,v); }
+function askSecs(cur){ const v=window.prompt("Sekunden pro Bild (0 = ohne Zeit):",cur||""); if(v===null) return cur; const n=Math.round(+v); return !isFinite(n)||n<=0?0:Math.max(5,Math.min(900,n)); }
+function hold(el,fn){ let t=0,iv=0; const stop=()=>{ clearTimeout(t); clearInterval(iv); };
+  el.addEventListener("pointerdown",e=>{ e.preventDefault(); fn(); stop(); t=setTimeout(()=>{ iv=setInterval(fn,60); },380); });
+  ["pointerup","pointerleave","pointercancel"].forEach(n=>el.addEventListener(n,stop)); }
+function setTime(s){ TIME=s; $("tSet").textContent=secTxt(s); try{ localStorage.setItem("ww2_time",s); }catch(e){} }
+hold($("tMinus"),()=>setTime(secStep(TIME,-1))); hold($("tPlus"),()=>setTime(secStep(TIME,1))); $("tTap").onclick=()=>setTime(askSecs(TIME)); setTime(TIME);
+function curSecs(){ return MP.playing&&MP.state?(MP.state.secs||0):TIME; }
+function stopTimer(){ clearInterval(tIv); tIv=0; }
+function startTimer(){ stopTimer(); const s=curSecs(); if(!s) return; tEnd=Date.now()+s*1000;
+  const tick=()=>{ const left=Math.max(0,Math.ceil((tEnd-Date.now())/1000)); $("tVal").textContent=left; $("tVal").classList.toggle("neg",left<=10); if(left<=0){ stopTimer(); evaluate(true); } };
+  tick(); tIv=setInterval(tick,200); }
+
+/* ---------- Mehrspieler ---------- */
+const MP={on:false,playing:false,c:null,code:"",id:"",name:"",state:null,players:{},base:"",game:-1,done:0,joined:0};
+const BROKERS=window.WW_BROKERS||["wss://broker.emqx.io:8084/mqtt","wss://broker.hivemq.com:8884/mqtt"];
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+function mpErr(t){ $("mpErr").textContent=t||""; $("mpErr").hidden=!t; }
+function mpBusy(b){ $("mpCreate").disabled=b; $("mpJoin").disabled=b; }
+function mpBoot(){ try{ MP.id=sessionStorage.getItem("ww2_id")||""; MP.name=localStorage.getItem("ww2_name")||""; }catch(e){}
+  if(!MP.id){ MP.id=Math.random().toString(36).slice(2,10); try{ sessionStorage.setItem("ww2_id",MP.id); }catch(e){} }
+  $("mpName").value=MP.name; const g=(new URLSearchParams(location.search).get("g")||"").replace(/\D/g,"").slice(0,6);
+  if(g){ $("mpCode").value=g; mpShowMenu(); mpErr(""); if(!MP.name) $("mpName").focus(); } }
+function mpShowMenu(){ $("mpMenu").hidden=false; $("mpLobby").hidden=true; show("mp"); }
+function mpShowLobby(){ $("mpMenu").hidden=true; $("mpLobby").hidden=false; show("mp"); mpRender(); }
+$("mpBtn").onclick=()=>{ mpErr(""); mpShowMenu(); };
+$("mpBack").onclick=()=>{ updBad(); show("start"); };
+function mpGetName(){ const n=$("mpName").value.trim().slice(0,16); if(!n){ mpErr("Bitte gib zuerst deinen Namen ein."); $("mpName").focus(); return null; } MP.name=n; try{ localStorage.setItem("ww2_name",n); }catch(e){} return n; }
+function mpConnect(code,bi){ return new Promise((ok,no)=>{ if(!window.mqtt) return no(new Error("lib"));
+  const base="wannwo/v1/"+code+"/"; let first=true;
+  const c=mqtt.connect(BROKERS[bi],{clientId:"ww_"+MP.id+"_"+Math.random().toString(36).slice(2,6),clean:true,keepalive:30,reconnectPeriod:3000,connectTimeout:7000,
+    will:{topic:base+"p/"+MP.id,payload:JSON.stringify({gone:1}),retain:true,qos:0}});
+  const t=setTimeout(()=>{ if(first){ first=false; try{ c.end(true); }catch(e){} no(new Error("timeout")); } },8000);
+  c.on("connect",()=>{ c.subscribe(base+"#",()=>{ if(first){ first=false; clearTimeout(t); MP.c=c; MP.base=base; MP.code=code; ok(); } else if(MP.c===c&&MP.on){ mpPubMe(); if(mpIsHost()) mpPubState(); } }); });
+  c.on("message",(topic,buf)=>{ if(MP.c===c) mpMsg(topic.slice(base.length),buf.toString()); });
+  c.on("error",()=>{}); }); }
+function mpDrop(){ if(MP.c){ try{ MP.c.end(true); }catch(e){} } MP.c=null; MP.state=null; MP.players={}; }
+const mpIsHost=()=>!!MP.state&&MP.state.host===MP.id;
+function mpPub(sub,obj){ if(MP.c) MP.c.publish(MP.base+sub,obj===null?"":JSON.stringify(obj),{retain:true,qos:0}); }
+function mpPubMe(){ mpPub("p/"+MP.id,{name:MP.name,score:MP.playing||MP.game>=0?G.account:0,done:MP.done,game:MP.game,t:MP.joined}); }
+function mpPubState(){ mpPub("state",MP.state); }
+$("mpCreate").onclick=async()=>{ if(!mpGetName()) return; mpErr(""); mpBusy(true);
+  try{ let okc=false;
+    for(let bi=0;bi<BROKERS.length&&!okc;bi++){ for(let tr=0;tr<3&&!okc;tr++){ const code=String(Math.floor(100000+Math.random()*900000));
+        try{ await mpConnect(code,bi); }catch(e){ if(e.message==="lib") throw e; break; }
+        await wait(1200); if(MP.state&&MP.state.host!==MP.id){ mpDrop(); continue; } okc=true; } }
+    if(!okc) throw new Error("net");
+    MP.on=true; MP.playing=false; MP.game=-1; MP.done=0; MP.joined=Date.now(); MP.state={host:MP.id,phase:"lobby",n:5,secs:0,round:0,game:0}; mpPubState(); mpPubMe(); mpShowLobby();
+  }catch(e){ mpDrop(); mpErr(e.message==="lib"?"Der Mehrspieler konnte nicht geladen werden. Lade die Seite neu.":"Keine Verbindung zum Server. Versuch es gleich nochmal."); }
+  mpBusy(false); };
+$("mpJoin").onclick=async()=>{ if(!mpGetName()) return; const code=$("mpCode").value.replace(/\D/g,""); if(code.length!==6){ mpErr("Der Code hat 6 Ziffern."); return; } mpErr(""); mpBusy(true);
+  try{ let found=false, net=false;
+    for(let bi=0;bi<BROKERS.length&&!found;bi++){ try{ await mpConnect(code,bi); }catch(e){ if(e.message==="lib") throw e; continue; }
+      net=true; for(let k=0;k<16&&!MP.state;k++) await wait(250); if(MP.state) found=true; else mpDrop(); }
+    if(!found) throw new Error(net?"none":"net");
+    MP.on=true; MP.playing=false; MP.game=-1; MP.done=0; MP.joined=Date.now(); mpPubMe(); mpShowLobby(); mpOnState();
+  }catch(e){ mpDrop(); mpErr(e.message==="lib"?"Der Mehrspieler konnte nicht geladen werden. Lade die Seite neu.":e.message==="none"?"Diese Gruppe gibt es nicht (mehr). Prüf den Code.":"Keine Verbindung zum Server. Versuch es gleich nochmal."); }
+  mpBusy(false); };
+function mpLeave(msg){ if(MP.c&&MP.on){ if(mpIsHost()) mpPub("state",null); mpPub("p/"+MP.id,null); } const c=MP.c; MP.on=false; MP.playing=false; stopTimer(); MP.c=null; MP.state=null; MP.players={};
+  setTimeout(()=>{ try{ c&&c.end(); }catch(e){} },400); mpShowMenu(); mpErr(msg||""); }
+$("mpLeave").onclick=()=>mpLeave("");
+function mpMsg(sub,txt){ let o=null; if(txt){ try{ o=JSON.parse(txt); }catch(e){ return; } }
+  if(sub==="state"){ if(!o){ if(MP.on&&MP.state&&!mpIsHost()) mpLeave("Der Spielleiter hat die Gruppe beendet."); return; } MP.state=o; if(MP.on) mpOnState(); }
+  else if(sub.slice(0,2)==="p/"){ const id=sub.slice(2); if(!o) delete MP.players[id]; else if(o.gone){ if(MP.players[id]) MP.players[id].gone=1; } else MP.players[id]=o; }
+  if(MP.on) mpRender(); }
+function mpOnState(){ const s=MP.state; if(!s) return;
+  if(s.phase==="lobby"){ if(MP.playing){ MP.playing=false; stopTimer(); mpShowLobby(); } }
+  else if(s.phase==="play"){
+    if(MP.game!==s.game){ if(s.round===0){ MP.game=s.game; MP.playing=true; MP.done=0; G.n=s.n; startGame(); mpPubMe(); } }
+    else if(MP.playing&&s.round>G.i){ if(canGuess) evaluate(true); G.i=s.round; startRound(); } }
+  else if(s.phase==="end"){ if(MP.playing&&MP.game===s.game){ if(canGuess) evaluate(true); MP.playing=false; endGame(); } } }
+function mpAfterRound(){ if(!MP.playing) return; MP.done=G.i+1; mpPubMe(); mpRender(); }
+function mpHostNext(){ if(!mpIsHost()) return; const s=MP.state; if(s.round+1<s.n) s.round++; else s.phase="end"; mpPubState(); }
+function mpActive(){ const s=MP.state; return Object.entries(MP.players).map(([id,p])=>({id,...p})).sort((a,b)=>(a.t||0)-(b.t||0)); }
+function mpRender(){ const s=MP.state; if(!MP.on||!s) return; const all=mpActive(), host=mpIsHost();
+  if(!$("mp").hidden&&!$("mpLobby").hidden){
+    $("mpCodeBig").textContent=MP.code; $("mpList").innerHTML=all.map(p=>"<div class='"+(p.id===MP.id?"me":"")+(p.gone?" off":"")+"'><span>"+esc(p.name)+(p.id===s.host?" 👑":"")+"</span><span>"+(p.gone?"weg":p.id===MP.id?"du":"")+"</span></div>").join("");
+    $("mpHostSet").hidden=!host; $("mpStart").hidden=!host; $("mrVal").textContent=s.n; $("msVal").textContent=secTxt(s.secs);
+    const running=s.phase==="play"&&!MP.playing; $("mpInfo").textContent=host?"":(running?"Das Spiel läuft schon. Du bist bei der nächsten Partie dabei.":s.n+" Runden · Zeit pro Bild: "+secTxt(s.secs)+" · Warte auf den Spielleiter …"); $("mpInfo").hidden=host; }
+  const game=all.filter(p=>p.game===s.game), live=game.filter(p=>!p.gone), rank=game.slice().sort((a,b)=>b.score-a.score);
+  const rows=rank.map((p,i)=>"<div class='"+(p.id===MP.id?"me":"")+(p.gone?" off":"")+"'><span>"+(i+1)+". "+esc(p.name)+"</span><span>"+fmt(p.score)+(s.phase==="play"?(p.done>s.round?" ✓":" …"):"")+"</span></div>").join("");
+  if(MP.playing&&!$("card").hidden){ $("mpBoard").hidden=false; $("mpBoard").innerHTML=rows; const fin=live.filter(p=>p.done>s.round).length, last=s.round+1>=s.n;
+    $("nextBtn").hidden=!host; if(host) $("nextBtn").textContent=last?"Endstand für alle":"Nächste Runde für alle";
+    $("mpWait").hidden=false; $("mpWait").textContent=fin+" von "+live.length+" fertig"+(host?"":" · Warte auf den Spielleiter …"); }
+  else if(!MP.playing){ $("mpBoard").hidden=true; $("mpWait").hidden=true; }
+  if(!$("end").hidden) $("endRank").innerHTML=rows; }
+let mpSetT=0; function mpSet(fn){ if(!mpIsHost()) return; fn(MP.state); mpRender(); clearTimeout(mpSetT); mpSetT=setTimeout(mpPubState,250); }
+hold($("mrMinus"),()=>mpSet(s=>{ s.n=Math.max(1,s.n-1); })); hold($("mrPlus"),()=>mpSet(s=>{ s.n=Math.min(30,ROUNDS.length,s.n+1); }));
+hold($("msMinus"),()=>mpSet(s=>{ s.secs=secStep(s.secs,-1); })); hold($("msPlus"),()=>mpSet(s=>{ s.secs=secStep(s.secs,1); })); $("msTap").onclick=()=>mpSet(s=>{ s.secs=askSecs(s.secs); });
+$("mpStart").onclick=()=>{ if(!mpIsHost()) return; clearTimeout(mpSetT); const s=MP.state; s.phase="play"; s.round=0; s.game=(s.game||0)+1; mpPubState(); };
+const mpLink=()=>location.origin+location.pathname+"?g="+MP.code;
+function mpCopyLink(btn){ const t=mpLink(); (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{ btn.textContent="Kopiert ✓"; setTimeout(()=>{ $("mpCopy").textContent="Link kopieren"; $("mpShare").textContent="Link teilen"; },1800); }).catch(()=>{ window.prompt("Kopiere diesen Link:",t); }); }
+$("mpCopy").onclick=()=>mpCopyLink($("mpCopy"));
+$("mpShare").onclick=()=>{ if(navigator.share) navigator.share({title:"Wann & Wo",text:"Spiel mit mir Wann & Wo! Code: "+MP.code,url:mpLink()}).catch(()=>{}); else mpCopyLink($("mpShare")); };
 
 /* ---------- Laden ---------- */
 fetch("rounds.json").then(r=>r.json()).then(r=>{ ROUNDS=r;
   YMIN=Math.floor(Math.min(...r.map(x=>+x.d.slice(0,4)))/10)*10; $("yRange").min=YMIN; $("yRange").max=YMAX; $("yMinL").textContent=YMIN; $("yMaxL").textContent=YMAX;
-  $("lead").textContent="Wo und wann wurde das Foto gemacht? "+r.length+" Orte aus "+YMIN+" bis heute."; updBad(); $("pick").hidden=false; $("startBtn").hidden=false; setRounds(5);
+  $("lead").textContent="Wo und wann wurde das Foto gemacht? "+r.length+" Orte aus "+YMIN+" bis heute."; updBad(); $("tpick").hidden=false; $("mpBtn").hidden=false; mpBoot(); $("pick").hidden=false; $("startBtn").hidden=false; setRounds(5);
 }).catch(()=>{ $("lead").textContent="Die Fotos konnten nicht geladen werden. Bitte Seite neu laden."; });
 </script>
 </body>
