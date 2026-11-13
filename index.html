@@ -301,11 +301,13 @@ html.phone .pick{padding:10px 16px}
   </div>
 
   <div class="glass" id="card" hidden>
+    <div style="color:var(--dim);text-transform:uppercase;letter-spacing:.08em;font-weight:700;font-size:.85rem;margin-bottom:-8px">Aufgenommen am</div>
     <h2 class="head" id="cDate"></h2>
     <p class="where" id="cWhere"></p>
     <p class="cap" id="cCap"></p>
     <div class="bar"><span id="cLoc"></span><b class="num" id="cLocP"></b><i><u id="cLocB" style="width:0"></u></i></div>
     <div class="bar t"><span id="cTime"></span><b class="num" id="cTimeP"></b><i><u id="cTimeB" style="width:0"></u></i></div>
+    <div class="num" id="cDates" style="display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:1.05rem;margin-top:-4px"></div>
     <div class="calc num" id="cCalc"></div>
     <div class="plist num" id="mpBoard" hidden></div>
     <p id="mpWait" hidden></p>
@@ -496,7 +498,8 @@ function evaluate(force){
   G.account+=res; G.log.push({lp,tp,n,res,date:dstr(ty,tm,td)}); updAccount();
   $("cDate").textContent=dstr(ty,tm,td); $("cWhere").textContent=r.p||""; $("cWhere").hidden=!r.p; $("cCap").textContent=r.t||""; $("cCap").hidden=!r.t;
   $("cLoc").textContent=guess?"Ort: "+kmTxt(km)+" daneben":"Ort: kein Tipp gesetzt"; $("cLocP").textContent=fmt(lp);
-  $("cTime").textContent="Zeit: "+daysTxt(days)+" (du: "+dstr(D.y,D.m,D.d)+")"; $("cTimeP").textContent=fmt(tp);
+  $("cTime").textContent="Zeit: "+daysTxt(days);
+  $("cDates").innerHTML="<span style='color:var(--dim)'>Richtig:</span><b style='color:var(--go)'>"+dstr(ty,tm,td)+"</b><span style='color:var(--dim)'>Dein Tipp:</span><b>"+dstr(D.y,D.m,D.d)+"</b>"; $("cTimeP").textContent=fmt(tp);
   $("cLocB").style.width="0"; $("cTimeB").style.width="0"; setTimeout(()=>{ $("cLocB").style.width=lp/50+"%"; $("cTimeB").style.width=tp/50+"%"; },60);
   let h="<span>Zusammen</span><b>"+fmt(raw)+"</b>";
   if(n>0){ h+="<span>"+n+(n===1?" weiteres Bild":" weitere Bilder")+": ÷ "+c.div+(neg?" (halbiert)":"")+"</span><b>"+fmt(div)+"</b>"; if(c.fix) h+="<span>Fixkosten"+(neg?" (halbiert)":"")+"</span><b>−"+fmt(c.fix)+"</b>"; }
