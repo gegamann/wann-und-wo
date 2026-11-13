@@ -164,6 +164,50 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
   #game.mapbig #more{display:none}
   #card{left:0;right:0;bottom:0;width:100%;border-radius:18px 18px 0 0;max-height:58dvh;padding-bottom:var(--padb)}
 }
+/* Handy-Oberfläche (wird automatisch erkannt) */
+#pMap,#pDate{display:none}
+html.phone #dock{flex-direction:row;align-items:stretch;gap:8px;left:max(8px,env(safe-area-inset-left,0px));right:max(8px,env(safe-area-inset-right,0px))}
+html.phone #pMap,html.phone #pDate{display:flex;flex:1;min-width:0;min-height:66px;border-radius:18px;font-weight:700;background:var(--panel);border:1px solid var(--line);
+  flex-direction:column;align-items:center;justify-content:center;line-height:1.15;font-size:1.05rem;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+html.phone #pMap small,html.phone #pDate small{font-size:.78rem;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+html.phone #pMap.set{border-color:var(--go);color:var(--go)}
+html.phone #game.mapbig #pMap,html.phone #game.dateopen #pDate{background:var(--gold);color:#221a00;border-color:var(--gold)}
+html.phone #game.mapbig #pMap small,html.phone #game.dateopen #pDate small{color:#221a00}
+html.phone #guessBtn{width:auto;flex:1.15;min-width:0;padding:0 8px;font-size:1.3rem;min-height:66px;border-radius:18px}
+html.phone #date{display:none;position:absolute;left:0;right:0;bottom:calc(100% + 8px);max-width:none;align-self:auto;padding:14px;background:var(--solid)}
+html.phone #game.dateopen #date{display:flex}
+html.phone .wheels{justify-content:center}
+html.phone .wheel button{height:56px;font-size:1.5rem}
+html.phone .wheel b{font-size:1.8rem}
+html.phone .w-d{width:76px} html.phone .w-m{width:138px} html.phone .w-y{width:104px}
+html.phone #yRange{height:48px}
+html.phone #mapWrap{display:none}
+html.phone #mapWrap.big{display:block;position:fixed;left:0;right:0;top:0;bottom:calc(66px + var(--padb) + 10px);width:auto;height:auto;border:0;border-radius:0;box-shadow:none}
+html.phone #mapWrap.full{display:block}
+html.phone #mapOpen{display:none}
+html.phone .mapbtns{top:max(10px,env(safe-area-inset-top,0px))}
+html.phone #game.mapbig #hud{display:none}
+html.phone #game.res #pMap,html.phone #game.res #pDate{display:none}
+html.phone #moreBtn,html.phone #skipBtn{padding:8px 12px!important;min-height:48px!important;font-size:.95rem}
+html.phone #more{gap:6px}
+html.phone .stats small{font-size:.7rem}
+html.phone .screen{justify-content:flex-start;gap:18px;padding-top:max(26px,env(safe-area-inset-top,0px))}
+html.phone .pick{padding:10px 16px}
+
+/* Zwischenstand + QR */
+#rankOv,#qrOv{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:20px;text-align:center}
+#rankOv{background:radial-gradient(900px 600px at 50% 0%,#3b2a7a 0%,#15152b 60%,var(--bg) 100%)}
+#rankOv h2{margin:0;font-size:clamp(2.2rem,8vw,3.6rem);line-height:1}
+#rankOv .top{width:min(480px,100%);display:flex;flex-direction:column;gap:8px}
+#rankOv .top div{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px 16px;border-radius:14px;background:rgba(255,255,255,.09);font-weight:700;font-size:1.25rem;text-align:left}
+#rankOv .top div.me{background:rgba(255,209,102,.25)}
+#rankOv .mine{font-size:clamp(1.6rem,6vw,2.4rem);color:var(--gold)}
+#qrOv{background:#fff;color:#111;cursor:pointer}
+#qrOv img{width:min(86vw,74dvh);height:auto;image-rendering:pixelated}
+#qrOv b{font-size:clamp(2rem,9vw,3.4rem);letter-spacing:.1em}
+#mpQR{display:flex;align-items:center;gap:14px;justify-content:center;background:#fff;color:#111;border-radius:16px;padding:10px 14px;font-weight:700;text-align:left;line-height:1.2}
+#mpQR img{width:112px;height:112px;image-rendering:pixelated;flex:none}
+
 @media (max-height:520px){ .wheel button{height:32px} #mapWrap.big{height:calc(100dvh - 110px)} }
 @media (prefers-reduced-motion:reduce){ *{transition:none!important} }
 </style>
@@ -246,6 +290,8 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
         <button id="mapClose" aria-label="Karte klein machen">✕</button>
       </div>
     </div>
+    <button id="pMap"><span id="pMapTxt">📍 Karte</span><small>Ort setzen</small></button>
+    <button id="pDate"><span class="num" id="pDateTxt">15. Jun 1950</span><small>Datum ändern</small></button>
     <button class="go" id="guessBtn" disabled>Erst Ort setzen</button>
   </div>
 
@@ -274,6 +320,14 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
   <button class="go" id="againBtn">Nochmal spielen</button>
 </div>
 
+<div id="rankOv" hidden>
+  <div style="color:var(--dim);text-transform:uppercase;letter-spacing:.1em;font-weight:700" id="rankSub"></div>
+  <h2 class="head">Zwischenstand</h2>
+  <div class="top num" id="rankTop"></div>
+  <div class="mine head" id="rankMine"></div>
+</div>
+<button id="qrOv" hidden aria-label="QR-Code schließen"><img id="qrBig" alt="QR-Code zum Beitreten"><b class="num" id="qrCode"></b><span>Scannen oder Code eingeben · Antippen zum Schließen</span></button>
+
 <div class="screen" id="mp" hidden>
   <h1 class="logo head" style="font-size:clamp(2.4rem,9vw,4.5rem)">Mit <span>Freunden</span></h1>
   <div class="glass mpbox" id="mpMenu">
@@ -288,6 +342,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
   <div class="glass mpbox" id="mpLobby" hidden>
     <div><div class="or">Code der Gruppe</div><div class="code head num" id="mpCodeBig"></div></div>
     <div class="mpset"><button class="ghost" id="mpShare">Link teilen</button><button class="ghost" id="mpCopy">Link kopieren</button></div>
+    <button id="mpQR" hidden><img id="mpQRimg" alt="QR-Code zum Beitreten"><span>QR-Code scannen<br><small style="font-weight:500">Antippen zum Vergrößern</small></span></button>
     <div class="plist" id="mpList"></div>
     <div class="mpset" id="mpHostSet">
       <div class="glass pick"><button class="round" id="mrMinus" aria-label="Eine Runde weniger">−</button><div><b class="head num" id="mrVal">5</b><small>Runden</small></div><button class="round" id="mrPlus" aria-label="Eine Runde mehr">+</button></div>
@@ -301,6 +356,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js" async></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js" async></script>
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
@@ -308,6 +364,12 @@ const fmt=n=>Math.round(n).toLocaleString("de-DE");
 const MONTHS=["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
 const FIX=[0,0,500,1500,3500];
 let ROUNDS=[], YMIN=1850, YMAX=new Date().getFullYear();
+
+/* ---------- Gerät erkennen ---------- */
+const TOUCHPHONE=matchMedia("(pointer:coarse)").matches&&Math.min(screen.width,screen.height)<=600;
+function devCheck(){ document.documentElement.classList.toggle("phone",TOUCHPHONE||innerWidth<=760); }
+devCheck(); window.addEventListener("resize",devCheck);
+const isPhone=()=>document.documentElement.classList.contains("phone");
 
 /* ---------- Punkte ---------- */
 function costs(n,neg){ let div=Math.pow(2,n), fix=FIX[n]; if(neg){ div=Math.max(1,div/2); fix=fix/2; } return {div,fix}; }
@@ -331,12 +393,14 @@ function initMap(){
   satLabels=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,maxNativeZoom:18});
   map.on("click",e=>{ if(!canGuess) return; const ll=e.latlng.wrap(); guess={lat:ll.lat,lon:ll.lng};
     if(guessM) guessM.setLatLng(e.latlng); else guessM=L.marker(e.latlng,{icon:pinIcon("#ff5a3c"),interactive:false}).addTo(map);
-    $("guessBtn").disabled=false; $("guessBtn").textContent="Raten"; });
+    $("guessBtn").disabled=false; $("guessBtn").textContent="Raten"; $("pMap").classList.add("set"); $("pMapTxt").textContent="📍 Ort ✓"; });
 }
 $("layerBtn").onclick=()=>{ isSat=!isSat; if(isSat){ map.removeLayer(streets); sat.addTo(map); satLabels.addTo(map); } else { map.removeLayer(sat); map.removeLayer(satLabels); streets.addTo(map); } $("layerBtn").textContent=isSat?"Karte":"Satellit"; };
 function mapSize(cls){ const w=$("mapWrap"); const c=map.getCenter(); w.classList.remove("big","full"); if(cls) w.classList.add(cls); $("game").classList.toggle("mapbig",cls==="big");
   let t=0; const tick=()=>{ map.invalidateSize({pan:false}); if(cls!=="full") map.setView(c,map.getZoom(),{animate:false}); if(++t<16) requestAnimationFrame(tick); }; tick(); }
 $("mapOpen").onclick=()=>mapSize("big");
+$("pMap").onclick=()=>{ $("game").classList.remove("dateopen"); mapSize($("mapWrap").classList.contains("big")?"":"big"); };
+$("pDate").onclick=()=>{ if($("mapWrap").classList.contains("big")) mapSize(""); $("game").classList.toggle("dateopen"); };
 $("mapClose").onclick=()=>mapSize("");
 
 /* ---------- Foto: zoomen und ziehen ---------- */
@@ -348,7 +412,7 @@ function pvFit(){ PV.iw=img.naturalWidth||1; PV.ih=img.naturalHeight||1; PV.min=
 function pvZoom(f,cx,cy){ const ns=Math.max(PV.min,Math.min(PV.min*8,PV.s*f)); const k=ns/PV.s; PV.x=cx-(cx-PV.x)*k; PV.y=cy-(cy-PV.y)*k; PV.s=ns; pvApply(); }
 const pp=new Map(); let pd=null, lastTap=0;
 box.addEventListener("pointerdown",e=>{ box.setPointerCapture(e.pointerId); pp.set(e.pointerId,{x:e.clientX,y:e.clientY}); pd=null;
-  if($("mapWrap").classList.contains("big")) mapSize("");
+  if($("mapWrap").classList.contains("big")) mapSize(""); $("game").classList.remove("dateopen");
   if(pp.size===1){ const now=performance.now(); if(now-lastTap<300) pvZoom(PV.s>PV.min*1.2?0.0001:2.6,e.clientX,e.clientY); lastTap=now; } });
 box.addEventListener("pointermove",e=>{ const p=pp.get(e.pointerId); if(!p) return;
   if(pp.size===1){ PV.x+=e.clientX-p.x; PV.y+=e.clientY-p.y; p.x=e.clientX; p.y=e.clientY; pvApply(); }
@@ -362,7 +426,7 @@ document.addEventListener("gesturestart",e=>e.preventDefault());
 /* ---------- Datum ---------- */
 const D={y:1950,m:6,d:15};
 function setDate(y,m,d){ D.y=Math.max(YMIN,Math.min(YMAX,y)); D.m=((m-1)%12+12)%12+1; const dim=new Date(D.y,D.m,0).getDate(); D.d=d<1?dim:d>dim?(d>31?1:dim):d;
-  $("yVal").textContent=D.y; $("mVal").textContent=MONTHS[D.m-1]; $("dVal").textContent=D.d+"."; $("yRange").value=D.y; }
+  $("yVal").textContent=D.y; $("mVal").textContent=MONTHS[D.m-1]; $("dVal").textContent=D.d+"."; $("yRange").value=D.y; $("pDateTxt").textContent=D.d+". "+MONTHS[D.m-1].slice(0,3)+" "+D.y; }
 function step(s,v){ if(s==="y") setDate(D.y+v,D.m,D.d); else if(s==="m") setDate(D.y,D.m+v,D.d); else { const dim=new Date(D.y,D.m,0).getDate(); let d=D.d+v; if(d>dim) d=1; if(d<1) d=dim; setDate(D.y,D.m,d); } }
 document.querySelectorAll(".wheel button").forEach(b=>{ let t=0,iv=0; const stop=()=>{ clearTimeout(t); clearInterval(iv); };
   b.addEventListener("pointerdown",e=>{ e.preventDefault(); const s=b.dataset.s,v=+b.dataset.v; step(s,v); stop(); t=setTimeout(()=>{ iv=setInterval(()=>step(s,v),70); },380); });
@@ -391,7 +455,7 @@ function updAccount(){ const a=$("account"); a.textContent=fmt(G.account); a.cla
 function loadPhoto(url){ return new Promise((ok,bad)=>{ const t=new Image(); t.onload=()=>ok(url); t.onerror=bad; t.src=url; }); }
 async function startRound(){
   const tok=++G.tok; stopTimer(); $("tCell").hidden=!curSecs(); $("tVal").textContent=curSecs()||""; $("tVal").classList.remove("neg");
-  const g=$("game"); g.classList.remove("res","peek"); $("card").hidden=true; $("spin").hidden=false; img.style.visibility="hidden";
+  const g=$("game"); g.classList.remove("res","peek","dateopen"); $("pMap").classList.remove("set"); $("pMapTxt").textContent="📍 Karte"; $("card").hidden=true; $("spin").hidden=false; img.style.visibility="hidden";
   G.shown=1; G.view=0; guess=null; canGuess=false; if(guessM){ map.removeLayer(guessM); guessM=null; } if(resLayer){ map.removeLayer(resLayer); resLayer=null; }
   $("roundNo").textContent=G.i+1; $("roundMax").textContent=G.n; updAccount();
   $("badBtn").disabled=false; $("badBtn").textContent="👎 Schlechtes Foto, nie wieder zeigen"; $("guessBtn").disabled=true; $("guessBtn").textContent="Erst Ort setzen"; $("peekBtn").textContent="Foto zeigen";
@@ -415,7 +479,7 @@ $("peekBtn").onclick=()=>{ const p=$("game").classList.toggle("peek"); $("peekBt
 
 $("guessBtn").onclick=()=>evaluate(false);
 function evaluate(force){
-  if(!canGuess||(!guess&&!force)) return; canGuess=false; stopTimer(); const r=G.cur;
+  if(!canGuess||(!guess&&!force)) return; canGuess=false; stopTimer(); $("game").classList.remove("dateopen","mapbig"); const r=G.cur;
   const km=guess?haversine(guess.lat,guess.lon,r.la,r.lo):null, [ty,tm,td]=r.d.split("-").map(Number), days=Math.abs(dayNum(D.y,D.m,D.d)-dayNum(ty,tm,td));
   const lp=guess?locPoints(km):0, tp=timePoints(days), raw=lp+tp, n=G.shown-1, neg=G.account<0, c=costs(n,neg), div=Math.round(raw/c.div), res=div-c.fix;
   G.account+=res; G.log.push({lp,tp,n,res,date:dstr(ty,tm,td)}); updAccount();
@@ -436,7 +500,7 @@ function evaluate(force){
   resLayer=L.layerGroup([L.polyline([gl,truth],{color:"#111",weight:4,dashArray:"8 10"}),L.marker(truth,{icon:pinIcon("#2fbf71"),interactive:false}).bindTooltip("Richtig",{permanent:true,direction:"top",offset:[0,-46],className:"tag"})]).addTo(map);
   guessM.bindTooltip("Du",{permanent:true,direction:"top",offset:[0,-46],className:"tag"});
   $("mapWrap").classList.remove("big"); $("mapWrap").classList.add("full"); map.invalidateSize({pan:false});
-  const narrow=innerWidth<=760, ch=$("card").offsetHeight;
+  const narrow=isPhone()||innerWidth<=760, ch=$("card").offsetHeight;
   map.fitBounds(L.latLngBounds([gl,truth]),{paddingTopLeft:narrow?[40,110]:[520,110],paddingBottomRight:narrow?[40,ch+30]:[60,60],maxZoom:15,animate:false});
 };
 $("nextBtn").onclick=()=>{ if(MP.playing){ mpHostNext(); return; } G.i++; if(G.i<G.n) startRound(); else endGame(); };
@@ -471,7 +535,7 @@ function mpBusy(b){ $("mpCreate").disabled=b; $("mpJoin").disabled=b; }
 function mpBoot(){ try{ MP.id=sessionStorage.getItem("ww2_id")||""; MP.name=localStorage.getItem("ww2_name")||""; }catch(e){}
   if(!MP.id){ MP.id=Math.random().toString(36).slice(2,10); try{ sessionStorage.setItem("ww2_id",MP.id); }catch(e){} }
   $("mpName").value=MP.name; const g=(new URLSearchParams(location.search).get("g")||"").replace(/\D/g,"").slice(0,6);
-  if(g){ $("mpCode").value=g; mpShowMenu(); mpErr(""); if(!MP.name) $("mpName").focus(); } }
+  if(g){ $("mpCode").value=g; mpShowMenu(); mpErr(""); if(MP.name) setTimeout(()=>$("mpJoin").click(),300); else $("mpName").focus(); } }
 function mpShowMenu(){ $("mpMenu").hidden=false; $("mpLobby").hidden=true; show("mp"); }
 function mpShowLobby(){ $("mpMenu").hidden=true; $("mpLobby").hidden=false; show("mp"); mpRender(); }
 $("mpBtn").onclick=()=>{ mpErr(""); mpShowMenu(); };
@@ -507,7 +571,7 @@ $("mpJoin").onclick=async()=>{ if(!mpGetName()) return; const code=$("mpCode").v
     MP.on=true; MP.playing=false; MP.game=-1; MP.done=0; MP.joined=Date.now(); mpPubMe(); mpShowLobby(); mpOnState();
   }catch(e){ mpDrop(); mpErr(e.message==="lib"?"Der Mehrspieler konnte nicht geladen werden. Lade die Seite neu.":e.message==="none"?"Diese Gruppe gibt es nicht (mehr). Prüf den Code.":"Keine Verbindung zum Server. Versuch es gleich nochmal."); }
   mpBusy(false); };
-function mpLeave(msg){ if(MP.c&&MP.on){ if(mpIsHost()) mpPub("state",null); mpPub("p/"+MP.id,null); } const c=MP.c; MP.on=false; MP.playing=false; stopTimer(); MP.c=null; MP.state=null; MP.players={};
+function mpLeave(msg){ clearTimeout(rankT); $("rankOv").hidden=true; $("qrOv").hidden=true; if(MP.c&&MP.on){ if(mpIsHost()) mpPub("state",null); mpPub("p/"+MP.id,null); } const c=MP.c; MP.on=false; MP.playing=false; stopTimer(); MP.c=null; MP.state=null; MP.players={};
   setTimeout(()=>{ try{ c&&c.end(); }catch(e){} },400); mpShowMenu(); mpErr(msg||""); }
 $("mpLeave").onclick=()=>mpLeave("");
 function mpMsg(sub,txt){ let o=null; if(txt){ try{ o=JSON.parse(txt); }catch(e){ return; } }
@@ -515,17 +579,25 @@ function mpMsg(sub,txt){ let o=null; if(txt){ try{ o=JSON.parse(txt); }catch(e){
   else if(sub.slice(0,2)==="p/"){ const id=sub.slice(2); if(!o) delete MP.players[id]; else if(o.gone){ if(MP.players[id]) MP.players[id].gone=1; } else MP.players[id]=o; }
   if(MP.on) mpRender(); }
 function mpOnState(){ const s=MP.state; if(!s) return;
+  if(s.phase!=="play"){ clearTimeout(rankT); $("rankOv").hidden=true; }
   if(s.phase==="lobby"){ if(MP.playing){ MP.playing=false; stopTimer(); mpShowLobby(); } }
   else if(s.phase==="play"){
     if(MP.game!==s.game){ if(s.round===0){ MP.game=s.game; MP.playing=true; MP.done=0; G.n=s.n; startGame(); mpPubMe(); } }
-    else if(MP.playing&&s.round>G.i){ if(canGuess) evaluate(true); G.i=s.round; startRound(); } }
+    else if(MP.playing&&s.round>G.i){ if(canGuess) evaluate(true); G.i=s.round; mpInterlude(s.round,s.game); } }
   else if(s.phase==="end"){ if(MP.playing&&MP.game===s.game){ if(canGuess) evaluate(true); MP.playing=false; endGame(); } } }
+let rankT=0;
+function mpRank(){ const s=MP.state; const r=Object.entries(MP.players).map(([id,p])=>({id,...p})).filter(p=>p.game===s.game); const me=r.find(p=>p.id===MP.id); if(me) me.score=G.account; return r.sort((a,b)=>b.score-a.score); }
+function mpRankFill(){ const r=mpRank(), medal=["🥇","🥈","🥉"], pos=r.findIndex(p=>p.id===MP.id);
+  $("rankTop").innerHTML=r.slice(0,3).map((p,i)=>"<div class='"+(p.id===MP.id?"me":"")+"'><span>"+medal[i]+" "+esc(p.name)+"</span><span>"+fmt(p.score)+"</span></div>").join("");
+  $("rankMine").textContent=pos<0?"":"Du bist auf Platz "+(pos+1)+" von "+r.length; return pos; }
+function mpInterlude(round,game){ clearTimeout(rankT); stopTimer(); $("rankSub").textContent="Nach Runde "+round+" von "+MP.state.n; mpRankFill(); $("rankOv").hidden=false;
+  rankT=setTimeout(()=>{ $("rankOv").hidden=true; if(MP.playing&&MP.state&&MP.state.game===game&&G.i===round) startRound(); },4500); }
 function mpAfterRound(){ if(!MP.playing) return; MP.done=G.i+1; mpPubMe(); mpRender(); }
 function mpHostNext(){ if(!mpIsHost()) return; const s=MP.state; if(s.round+1<s.n) s.round++; else s.phase="end"; mpPubState(); }
 function mpActive(){ const s=MP.state; return Object.entries(MP.players).map(([id,p])=>({id,...p})).sort((a,b)=>(a.t||0)-(b.t||0)); }
 function mpRender(){ const s=MP.state; if(!MP.on||!s) return; const all=mpActive(), host=mpIsHost();
   if(!$("mp").hidden&&!$("mpLobby").hidden){
-    $("mpCodeBig").textContent=MP.code; $("mpList").innerHTML=all.map(p=>"<div class='"+(p.id===MP.id?"me":"")+(p.gone?" off":"")+"'><span>"+esc(p.name)+(p.id===s.host?" 👑":"")+"</span><span>"+(p.gone?"weg":p.id===MP.id?"du":"")+"</span></div>").join("");
+    $("mpCodeBig").textContent=MP.code; mpQR(); $("mpList").innerHTML=all.map(p=>"<div class='"+(p.id===MP.id?"me":"")+(p.gone?" off":"")+"'><span>"+esc(p.name)+(p.id===s.host?" 👑":"")+"</span><span>"+(p.gone?"weg":p.id===MP.id?"du":"")+"</span></div>").join("");
     $("mpHostSet").hidden=!host; $("mpStart").hidden=!host; $("mrVal").textContent=s.n; $("msVal").textContent=secTxt(s.secs);
     const running=s.phase==="play"&&!MP.playing; $("mpInfo").textContent=host?"":(running?"Das Spiel läuft schon. Du bist bei der nächsten Partie dabei.":s.n+" Runden · Zeit pro Bild: "+secTxt(s.secs)+" · Warte auf den Spielleiter …"); $("mpInfo").hidden=host; }
   const game=all.filter(p=>p.game===s.game), live=game.filter(p=>!p.gone), rank=game.slice().sort((a,b)=>b.score-a.score);
@@ -534,12 +606,15 @@ function mpRender(){ const s=MP.state; if(!MP.on||!s) return; const all=mpActive
     $("nextBtn").hidden=!host; if(host) $("nextBtn").textContent=last?"Endstand für alle":"Nächste Runde für alle";
     $("mpWait").hidden=false; $("mpWait").textContent=fin+" von "+live.length+" fertig"+(host?"":" · Warte auf den Spielleiter …"); }
   else if(!MP.playing){ $("mpBoard").hidden=true; $("mpWait").hidden=true; }
-  if(!$("end").hidden) $("endRank").innerHTML=rows; }
+  if(!$("rankOv").hidden) mpRankFill();
+  if(!$("end").hidden){ const pos=rank.findIndex(p=>p.id===MP.id); $("endRank").innerHTML=(pos<0?"":"<div class='me' style='justify-content:center'>Du bist auf Platz "+(pos+1)+" von "+rank.length+"</div>")+rows; } }
 let mpSetT=0; function mpSet(fn){ if(!mpIsHost()) return; fn(MP.state); mpRender(); clearTimeout(mpSetT); mpSetT=setTimeout(mpPubState,250); }
 hold($("mrMinus"),()=>mpSet(s=>{ s.n=Math.max(1,s.n-1); })); hold($("mrPlus"),()=>mpSet(s=>{ s.n=Math.min(30,ROUNDS.length,s.n+1); }));
 hold($("msMinus"),()=>mpSet(s=>{ s.secs=secStep(s.secs,-1); })); hold($("msPlus"),()=>mpSet(s=>{ s.secs=secStep(s.secs,1); })); $("msTap").onclick=()=>mpSet(s=>{ s.secs=askSecs(s.secs); });
 $("mpStart").onclick=()=>{ if(!mpIsHost()) return; clearTimeout(mpSetT); const s=MP.state; s.phase="play"; s.round=0; s.game=(s.game||0)+1; mpPubState(); };
 const mpLink=()=>location.origin+location.pathname+"?g="+MP.code;
+let qrFor=""; function mpQR(){ if(qrFor===MP.code||!window.qrcode) return; try{ const q=qrcode(0,"M"); q.addData(mpLink()); q.make(); const u=q.createDataURL(10,3); $("mpQRimg").src=u; $("qrBig").src=u; $("qrCode").textContent=MP.code; $("mpQR").hidden=false; qrFor=MP.code; }catch(e){} }
+$("mpQR").onclick=()=>{ $("qrOv").hidden=false; }; $("qrOv").onclick=()=>{ $("qrOv").hidden=true; };
 function mpCopyLink(btn){ const t=mpLink(); (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>{ btn.textContent="Kopiert ✓"; setTimeout(()=>{ $("mpCopy").textContent="Link kopieren"; $("mpShare").textContent="Link teilen"; },1800); }).catch(()=>{ window.prompt("Kopiere diesen Link:",t); }); }
 $("mpCopy").onclick=()=>mpCopyLink($("mpCopy"));
 $("mpShare").onclick=()=>{ if(navigator.share) navigator.share({title:"Wann & Wo",text:"Spiel mit mir Wann & Wo! Code: "+MP.code,url:mpLink()}).catch(()=>{}); else mpCopyLink($("mpShare")); };
