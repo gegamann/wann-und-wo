@@ -7,11 +7,13 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#12121f">
 <title>Wann &amp; Wo</title>
+<link rel="preconnect" href="https://upload.wikimedia.org" crossorigin>
+<link rel="preconnect" href="https://tile.openstreetmap.org">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,500;0,700;1,800&family=Barlow+Condensed:ital,wght@1,800&display=swap">
 <style>
 :root{
-  --bg:#12121f; --panel:rgba(20,20,36,.88); --solid:#1c1c30; --line:rgba(255,255,255,.16);
+  --bg:#12121f; --panel:rgba(20,20,36,.95); --solid:#1c1c30; --line:rgba(255,255,255,.16);
   --fg:#fff; --dim:#b9bbd0; --go:#7fd13b; --go2:#5aa820; --gold:#ffd166; --red:#ff6b6b; --blue:#56b3fa;
   --ui:"Barlow","Helvetica Neue",Arial,sans-serif; --head:"Barlow Condensed","Barlow","Arial Narrow",sans-serif;
   --pad:max(14px,env(safe-area-inset-left,0px)); --padb:max(14px,env(safe-area-inset-bottom,0px)); --padt:max(12px,env(safe-area-inset-top,0px));
@@ -28,7 +30,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
   text-transform:uppercase;font-size:1.5rem;min-height:64px;padding:0 34px;box-shadow:0 5px 0 #37690f,0 10px 24px rgba(0,0,0,.4);transition:transform .08s}
 .go:active{transform:translateY(3px);box-shadow:0 2px 0 #37690f}
 .go:disabled{background:#3a3d52;color:#9a9db3;box-shadow:0 5px 0 #262838;cursor:default}
-.glass{background:var(--panel);border:1px solid var(--line);border-radius:18px;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.glass{background:var(--panel);border:1px solid var(--line);border-radius:18px}
 
 /* ---------- Start / Ende ---------- */
 .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:var(--padt) var(--pad) var(--padb);
@@ -88,8 +90,8 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 #guessBtn{width:340px;flex:none}
 
 #mapWrap{position:absolute;right:0;bottom:78px;width:340px;height:210px;border-radius:16px;overflow:hidden;border:2px solid rgba(255,255,255,.55);box-shadow:0 12px 32px rgba(0,0,0,.55);
-  transition:width .22s ease,height .22s ease,opacity .2s;opacity:.82;background:#223}
-#mapWrap.big{width:min(62vw,920px);height:min(66dvh,680px);opacity:1}
+  transition:width .18s ease,height .18s ease;background:#223}
+#mapWrap.big{width:min(62vw,920px);height:min(66dvh,680px)}
 #map{position:absolute;inset:0;background:#aad3df;font-family:var(--ui)}
 #mapOpen{position:absolute;inset:0;z-index:1200}
 #mapWrap.big #mapOpen{display:none}
@@ -168,7 +170,7 @@ button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 #pMap,#pDate{display:none}
 html.phone #dock{flex-direction:row;align-items:stretch;gap:8px;left:max(8px,env(safe-area-inset-left,0px));right:max(8px,env(safe-area-inset-right,0px))}
 html.phone #pMap,html.phone #pDate{display:flex;flex:1;min-width:0;min-height:66px;border-radius:18px;font-weight:700;background:var(--panel);border:1px solid var(--line);
-  flex-direction:column;align-items:center;justify-content:center;line-height:1.15;font-size:1.05rem;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+  flex-direction:column;align-items:center;justify-content:center;line-height:1.15;font-size:1.05rem}
 html.phone #pMap small,html.phone #pDate small{font-size:.78rem;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
 html.phone #pMap.set{border-color:var(--go);color:var(--go)}
 html.phone #game.mapbig #pMap,html.phone #game.dateopen #pDate{background:var(--gold);color:#221a00;border-color:var(--gold)}
@@ -260,10 +262,13 @@ html.phone .pick{padding:10px 16px}
   <div id="spin">Lade Foto …</div>
 
   <div id="hud">
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
     <div class="glass stats">
       <div><small>Runde</small><b class="head num"><span id="roundNo">1</span>/<span id="roundMax">5</span></b></div>
       <div><small>Konto</small><b class="head num" id="account">0</b></div>
       <div id="tCell" hidden><small>Zeit</small><b class="head num" id="tVal">0</b></div>
+    </div>
+    <button class="glass" id="mpAbort" hidden style="padding:8px 14px;font-weight:700;min-height:48px;font-size:.95rem;color:var(--red)">✕ Partie abbrechen</button>
     </div>
     <div id="more">
       <div class="glass" id="pics" hidden></div>
@@ -373,8 +378,8 @@ const isPhone=()=>document.documentElement.classList.contains("phone");
 
 /* ---------- Punkte ---------- */
 function costs(n,neg){ let div=Math.pow(2,n), fix=FIX[n]; if(neg){ div=Math.max(1,div/2); fix=fix/2; } return {div,fix}; }
-function locPoints(km){ return km<0.25?5000:Math.min(4999,Math.round(5000*Math.exp(-km/1492))); }
-function timePoints(days){ return days===0?5000:Math.min(4999,Math.round(5000*Math.exp(-days/3650))); }
+function locPoints(km){ return km<1?5000:Math.min(4999,Math.round(5000*Math.exp(-km/2500))); }
+function timePoints(days){ return days===0?5000:Math.min(4999,Math.round(5000*Math.exp(-days/6000))); }
 function haversine(a,b,c,d){ const R=6371,r=Math.PI/180,x=Math.sin((c-a)*r/2),y=Math.sin((d-b)*r/2); return 2*R*Math.asin(Math.sqrt(x*x+Math.cos(a*r)*Math.cos(c*r)*y*y)); }
 function dayNum(y,m,d){ return Math.round(Date.UTC(y,m-1,d)/864e5); }
 const dstr=(y,m,d)=>d+". "+MONTHS[m-1]+" "+y;
@@ -385,12 +390,12 @@ function daysTxt(d){ if(d===0) return "genau richtig"; if(d<60) return d+(d===1?
 let map, streets, sat, satLabels, isSat=false, guess=null, guessM=null, resLayer=null, canGuess=false;
 const pinIcon=c=>L.divIcon({className:"",html:'<svg class="pin" viewBox="0 0 34 46"><path d="M17 45C17 45 2 27 2 16A15 15 0 0 1 32 16C32 27 17 45 17 45Z" fill="'+c+'" stroke="#fff" stroke-width="3"/><circle cx="17" cy="16" r="5.5" fill="#fff"/></svg>',iconSize:[0,0]});
 function initMap(){
-  map=L.map("map",{center:[25,10],zoom:2,minZoom:1,maxZoom:19,worldCopyJump:true,zoomSnap:.5,zoomDelta:1,wheelPxPerZoomLevel:90,
+  map=L.map("map",{center:[25,10],zoom:2,minZoom:1,maxZoom:19,worldCopyJump:true,zoomSnap:1,zoomDelta:1,wheelPxPerZoomLevel:80,fadeAnimation:false,markerZoomAnimation:true,
     maxBounds:[[-85,-100000],[85,100000]],maxBoundsViscosity:1,inertiaDeceleration:2400,bounceAtZoomLimits:false,attributionControl:true});
   map.attributionControl.setPrefix(false); map.zoomControl.setPosition('bottomright');
-  streets=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(map);
-  sat=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,maxNativeZoom:18,attribution:"© Esri, Maxar, Earthstar"});
-  satLabels=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,maxNativeZoom:18});
+  streets=L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap",keepBuffer:4,updateWhenIdle:false,updateWhenZooming:false}).addTo(map);
+  sat=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,maxNativeZoom:18,attribution:"© Esri, Maxar, Earthstar",keepBuffer:4,updateWhenIdle:false,updateWhenZooming:false});
+  satLabels=L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",{maxZoom:19,maxNativeZoom:18,keepBuffer:2,updateWhenZooming:false});
   map.on("click",e=>{ if(!canGuess) return; const ll=e.latlng.wrap(); guess={lat:ll.lat,lon:ll.lng};
     if(guessM) guessM.setLatLng(e.latlng); else guessM=L.marker(e.latlng,{icon:pinIcon("#ff5a3c"),interactive:false}).addTo(map);
     $("guessBtn").disabled=false; $("guessBtn").textContent="Raten"; $("pMap").classList.add("set"); $("pMapTxt").textContent="📍 Ort ✓"; });
@@ -434,7 +439,7 @@ document.querySelectorAll(".wheel button").forEach(b=>{ let t=0,iv=0; const stop
 $("yRange").oninput=e=>setDate(+e.target.value,D.m,D.d);
 
 /* ---------- Ablauf ---------- */
-const G={n:5,i:0,account:0,queue:[],cur:null,shown:1,view:0,log:[],tok:0,pool:[]};
+const G={n:5,i:0,account:0,queue:[],cur:null,shown:1,view:0,log:[],tok:0,vtok:0,pool:[]};
 function show(id){ for(const s of ["start","game","end","mp"]) $(s).hidden=s!==id; }
 function seen(){ try{ return JSON.parse(localStorage.getItem("ww2_seen")||"[]"); }catch(e){ return []; } }
 function markSeen(id){ try{ let s=seen(); s.push(id); if(s.length>=ROUNDS.length) s=[id]; localStorage.setItem("ww2_seen",JSON.stringify(s)); }catch(e){} }
@@ -449,10 +454,14 @@ function setRounds(n){ G.n=Math.max(1,Math.min(Math.min(30,ROUNDS.length),n)); $
 $("rMinus").onclick=()=>setRounds(G.n-1); $("rPlus").onclick=()=>setRounds(G.n+1);
 $("rulesBtn").onclick=()=>{ $("rules").hidden=false; }; $("rulesClose").onclick=()=>{ $("rules").hidden=true; };
 $("startBtn").onclick=()=>{ MP.playing=false; startGame(); }; $("againBtn").onclick=()=>{ if(MP.on){ mpShowLobby(); return; } updBad(); show("start"); };
-function startGame(){ $("mpBoard").hidden=true; $("mpWait").hidden=true; const s=new Set(seen()), bd=new Set(bad()), ok=ROUNDS.filter(r=>!bd.has(r.id)); const fresh=shuffle(ok.filter(r=>!s.has(r.id))), old=shuffle(ok.filter(r=>s.has(r.id)));
+function startGame(){ $("mpAbort").hidden=!(MP.playing&&mpIsHost()); $("mpBoard").hidden=true; $("mpWait").hidden=true; const s=new Set(seen()), bd=new Set(bad()), ok=ROUNDS.filter(r=>!bd.has(r.id)); const fresh=shuffle(ok.filter(r=>!s.has(r.id))), old=shuffle(ok.filter(r=>s.has(r.id)));
   G.pool=fresh.concat(old); G.queue=G.pool.splice(0,G.n); G.i=0; G.account=0; G.log=[]; show("game"); if(!map) initMap(); startRound(); }
 function updAccount(){ const a=$("account"); a.textContent=fmt(G.account); a.classList.toggle("neg",G.account<0); }
-function loadPhoto(url){ return new Promise((ok,bad)=>{ const t=new Image(); t.onload=()=>ok(url); t.onerror=bad; t.src=url; }); }
+const got=new Set(); const lo=u=>u.replace(/\/\d+px-/,"/500px-");
+function loadPhoto(url){ return new Promise((ok,bad)=>{ if(got.has(url)) return ok(url); const t=new Image(); t.decoding="async"; t.onload=()=>{ got.add(url); ok(url); }; t.onerror=bad; t.src=url; }); }
+function preload(r){ if(!r) return; loadPhoto(lo(r.im[0].s)).catch(()=>{}).then(()=>loadPhoto(r.im[0].s)).catch(()=>{}); }
+function showImg(url,keep){ const ow=PV.iw, os=PV.s, fx=PV.x, fy=PV.y, zoomed=keep&&PV.s>PV.min*1.01;
+  img.onload=()=>{ $("spin").hidden=true; img.style.visibility="visible"; pvFit(); if(zoomed){ PV.s=os*ow/PV.iw; PV.x=fx; PV.y=fy; pvApply(); } }; img.src=url; if(img.complete&&img.naturalWidth) img.onload(); }
 async function startRound(){
   const tok=++G.tok; stopTimer(); $("tCell").hidden=!curSecs(); $("tVal").textContent=curSecs()||""; $("tVal").classList.remove("neg");
   const g=$("game"); g.classList.remove("res","peek","dateopen"); $("pMap").classList.remove("set"); $("pMapTxt").textContent="📍 Karte"; $("card").hidden=true; $("spin").hidden=false; img.style.visibility="hidden";
@@ -461,13 +470,15 @@ async function startRound(){
   $("badBtn").disabled=false; $("badBtn").textContent="👎 Schlechtes Foto, nie wieder zeigen"; $("guessBtn").disabled=true; $("guessBtn").textContent="Erst Ort setzen"; $("peekBtn").textContent="Foto zeigen";
   mapSize(""); map.setView([25,10],2,{animate:false}); setDate(Math.round((YMIN+YMAX)/2),6,15);
   let r=G.queue[G.i];
-  for(let tries=0;tries<6;tries++){ try{ await loadPhoto(r.im[0].s); break; }catch(e){ if(!G.pool.length) break; r=G.queue[G.i]=G.pool.shift(); } }
+  for(let tries=0;tries<6;tries++){ try{ await loadPhoto(lo(r.im[0].s)).catch(()=>loadPhoto(r.im[0].s)); break; }catch(e){ if(!G.pool.length) break; r=G.queue[G.i]=G.pool.shift(); } }
   if(tok!==G.tok) return;
   G.cur=r; markSeen(r.id); canGuess=true; renderPhoto(); startTimer();
-  const nx=G.queue[G.i+1]; if(nx) loadPhoto(nx.im[0].s).catch(()=>{});
+  preload(G.queue[G.i+1]); if(!G.queue[G.i+1]) preload(G.pool[0]);
 }
 function renderPhoto(){
-  const r=G.cur; $("spin").hidden=false; img.onload=()=>{ $("spin").hidden=true; img.style.visibility="visible"; pvFit(); }; img.src=r.im[G.view].s; if(img.complete&&img.naturalWidth) img.onload();
+  const r=G.cur, full=r.im[G.view].s, low=lo(full), vt=++G.vtok;
+  if(got.has(full)) showImg(full); else { if(got.has(low)) showImg(low); else { $("spin").hidden=false; loadPhoto(low).then(()=>{ if(vt===G.vtok&&!got.has(full)) showImg(low); }).catch(()=>{}); }
+    loadPhoto(full).then(()=>{ if(vt===G.vtok) showImg(full,true); }).catch(()=>{}); }
   const total=canGuess?G.shown:r.im.length, p=$("pics"); p.innerHTML=""; p.hidden=total<2;
   for(let i=0;i<total;i++){ const b=document.createElement("button"); b.textContent=i+1; b.className=i===G.view?"on":""; b.setAttribute("aria-label","Bild "+(i+1)); b.onclick=()=>{ G.view=i; renderPhoto(); }; p.appendChild(b); }
   const neg=G.account<0, m=$("moreBtn"), max=Math.min(5,r.im.length);
@@ -580,7 +591,7 @@ function mpMsg(sub,txt){ let o=null; if(txt){ try{ o=JSON.parse(txt); }catch(e){
   if(MP.on) mpRender(); }
 function mpOnState(){ const s=MP.state; if(!s) return;
   if(s.phase!=="play"){ clearTimeout(rankT); $("rankOv").hidden=true; }
-  if(s.phase==="lobby"){ if(MP.playing){ MP.playing=false; stopTimer(); mpShowLobby(); } }
+  if(s.phase==="lobby"){ if(MP.playing){ MP.playing=false; G.tok++; canGuess=false; stopTimer(); $("mpAbort").hidden=true; mpShowLobby(); } }
   else if(s.phase==="play"){
     if(MP.game!==s.game){ if(s.round===0){ MP.game=s.game; MP.playing=true; MP.done=0; G.n=s.n; startGame(); mpPubMe(); } }
     else if(MP.playing&&s.round>G.i){ if(canGuess) evaluate(true); G.i=s.round; mpInterlude(s.round,s.game); } }
@@ -588,14 +599,20 @@ function mpOnState(){ const s=MP.state; if(!s) return;
 let rankT=0;
 function mpRank(){ const s=MP.state; const r=Object.entries(MP.players).map(([id,p])=>({id,...p})).filter(p=>p.game===s.game); const me=r.find(p=>p.id===MP.id); if(me) me.score=G.account; return r.sort((a,b)=>b.score-a.score); }
 function mpRankFill(){ const r=mpRank(), medal=["🥇","🥈","🥉"], pos=r.findIndex(p=>p.id===MP.id);
-  $("rankTop").innerHTML=r.slice(0,3).map((p,i)=>"<div class='"+(p.id===MP.id?"me":"")+"'><span>"+medal[i]+" "+esc(p.name)+"</span><span>"+fmt(p.score)+"</span></div>").join("");
+  const idx=[...new Set([0,1,2,pos-1,pos,pos+1].filter(i=>i>=0&&i<r.length))].sort((a,b)=>a-b); let h="", prev=-1;
+  for(const i of idx){ if(prev>=0&&i>prev+1) h+="<div style='justify-content:center;background:none;padding:0'>…</div>"; const p=r[i]; h+="<div class='"+(p.id===MP.id?"me":"")+"'><span>"+(i+1)+". "+(medal[i]||"")+" "+esc(p.name)+"</span><span>"+fmt(p.score)+"</span></div>"; prev=i; }
+  $("rankTop").innerHTML=h;
   $("rankMine").textContent=pos<0?"":"Du bist auf Platz "+(pos+1)+" von "+r.length; return pos; }
 function mpInterlude(round,game){ clearTimeout(rankT); stopTimer(); $("rankSub").textContent="Nach Runde "+round+" von "+MP.state.n; mpRankFill(); $("rankOv").hidden=false;
   rankT=setTimeout(()=>{ $("rankOv").hidden=true; if(MP.playing&&MP.state&&MP.state.game===game&&G.i===round) startRound(); },4500); }
 function mpAfterRound(){ if(!MP.playing) return; MP.done=G.i+1; mpPubMe(); mpRender(); }
+let abortT=0;
+$("mpAbort").onclick=()=>{ if(!mpIsHost()||!MP.playing) return; const b=$("mpAbort");
+  if(b.dataset.sure){ clearTimeout(abortT); delete b.dataset.sure; b.textContent="✕ Partie abbrechen"; const s=MP.state; s.phase="lobby"; mpPubState(); }
+  else { b.dataset.sure="1"; b.textContent="Wirklich? Nochmal tippen"; abortT=setTimeout(()=>{ delete b.dataset.sure; b.textContent="✕ Partie abbrechen"; },3000); } };
 function mpHostNext(){ if(!mpIsHost()) return; const s=MP.state; if(s.round+1<s.n) s.round++; else s.phase="end"; mpPubState(); }
 function mpActive(){ const s=MP.state; return Object.entries(MP.players).map(([id,p])=>({id,...p})).sort((a,b)=>(a.t||0)-(b.t||0)); }
-function mpRender(){ const s=MP.state; if(!MP.on||!s) return; const all=mpActive(), host=mpIsHost();
+function mpRender(){ const s=MP.state; $("mpAbort").hidden=!(MP.on&&MP.playing&&s&&s.host===MP.id); if(!MP.on||!s) return; const all=mpActive(), host=mpIsHost();
   if(!$("mp").hidden&&!$("mpLobby").hidden){
     $("mpCodeBig").textContent=MP.code; mpQR(); $("mpList").innerHTML=all.map(p=>"<div class='"+(p.id===MP.id?"me":"")+(p.gone?" off":"")+"'><span>"+esc(p.name)+(p.id===s.host?" 👑":"")+"</span><span>"+(p.gone?"weg":p.id===MP.id?"du":"")+"</span></div>").join("");
     $("mpHostSet").hidden=!host; $("mpStart").hidden=!host; $("mrVal").textContent=s.n; $("msVal").textContent=secTxt(s.secs);
